@@ -16,36 +16,29 @@ public class Receipt {
         BigDecimal subTotal = calculateSubtotal(products, items);
 
         for (Product product : products) {
-            OrderItem curItem = findOrderItemByProduct(items, product);
+            OrderItem curItem = product.findOrderItemByProduct(items);
 
-            BigDecimal reducedPrice = product.getPrice()
-                    .multiply(product.getDiscountRate())
-                    .multiply(new BigDecimal(curItem.getCount()));
-
-            subTotal = subTotal.subtract(reducedPrice);
+            subTotal = subTotal.subtract(getReducedPrice(product, curItem));
         }
-        BigDecimal taxTotal = subTotal.multiply(tax);
-        BigDecimal grandTotal = subTotal.add(taxTotal);
 
-        return grandTotal.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+        return addTaxPrice(subTotal).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
     }
 
+    private BigDecimal addTaxPrice(BigDecimal subTotal) {
+        BigDecimal taxTotal = subTotal.multiply(tax);
+        return subTotal.add(taxTotal);
+    }
 
-    private OrderItem findOrderItemByProduct(List<OrderItem> items, Product product) {
-        OrderItem curItem = null;
-        for (OrderItem item : items) {
-            if (item.getCode() == product.getCode()) {
-                curItem = item;
-                break;
-            }
-        }
-        return curItem;
+    private BigDecimal getReducedPrice(Product product, OrderItem curItem) {
+        return product.getPrice()
+                        .multiply(product.getDiscountRate())
+                        .multiply(new BigDecimal(curItem.getCount()));
     }
 
     private BigDecimal calculateSubtotal(List<Product> products, List<OrderItem> items) {
         BigDecimal subTotal = new BigDecimal(0);
         for (Product product : products) {
-            OrderItem item = findOrderItemByProduct(items, product);
+            OrderItem item = product.findOrderItemByProduct(items);
             BigDecimal itemTotal = product.getPrice().multiply(new BigDecimal(item.getCount()));
             subTotal = subTotal.add(itemTotal);
         }
